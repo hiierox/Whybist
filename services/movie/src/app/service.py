@@ -11,6 +11,7 @@ from app.api.handler import router as kp_router
 from app.config.config import settings
 from app.core.exceptions import KinopoiskApiError
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -60,7 +61,7 @@ async def kinopoisk_api_error_handler(
         )
     else:
         logger.warning(
-            f'Kinopoisk war on {request.method} {request.url.path}', exc_info=exc
+            f'Kinopoisk warning on {request.method} {request.url.path}', exc_info=exc
         )
 
     return JSONResponse(status_code=exc.status_code, content={'detail': detail})
