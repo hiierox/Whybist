@@ -1,5 +1,8 @@
 import logging
-from typing import Any
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
+
+from pydantic import BaseModel
 
 from app.api.schemas import (
     MovieGetByIdResponse,
@@ -11,6 +14,7 @@ from app.config.config import settings
 from app.external_services.kinopoisk import KinopoiskService
 from app.external_services.redis import RedisService
 
+TModel = TypeVar('TModel', bound=BaseModel)
 logger = logging.getLogger(__name__)
 
 
@@ -43,67 +47,65 @@ class MovieService:
                 key.append(str(part).strip().lower())
         return ':'.join(key)
 
+    async def _fetch_from_kinopoiskapi_or_cache(
+            self,
+            key: str,
+            ttl: int,
+            model: type[TModel],
+            fetcher: Callable[[], Awaitable[dict[str, Any]]]
+    ) -> TModel:
+        cached = await self._get_cached_data(key, ttl)
+        if cached is not None:
+            return model.model_validate(cached)
+
+        raw = await fetcher()
+        validated = model.model_validate(raw)
+        payload = validated.model_dump(by_alias=True, mode='json')
+        await self._set_cache_data(key, payload, ttl)
+        return validated
+
     async def search_movie_by_keyword(
         self, keyword: str, page: int = 1
     ) -> MovieSearchByKeywordResponse:
         """Gets a list of movies by keyword."""
-
         key = self._cache_key('search', keyword, page)
-        cached_response = await self._get_cached_data(
-            key, settings.SEARCH_BY_KEYWORD_TTL
+        return await self._fetch_from_kinopoiskapi_or_cache(
+            key=key,
+            ttl=settings.SEARCH_BY_KEYWORD_TTL,
+            model=MovieSearchByKeywordResponse,
+            fetcher=lambda: self.kinopoisk_service.search_movie_by_keyword(
+                params={'keyword': keyword, 'page': page}
+            )
         )
-        if cached_response is not None:
-            return MovieSearchByKeywordResponse.model_validate(cached_response)
-
-        response = await self.kinopoisk_service.search_movie_by_keyword(
-            params={'keyword': keyword, 'page': page}
-        )
-        validated_response = MovieSearchByKeywordResponse.model_validate(response)
-        dict_response = validated_response.model_dump(by_alias=True, mode='json')
-        await self._set_cache_data(key, dict_response, settings.SEARCH_BY_KEYWORD_TTL)
-
-        return validated_response
 
     async def get_movie_by_id(self, movie_id: int) -> MovieGetByIdResponse:
         """Gets a movie by id"""
-
         key = self._cache_key('movie', movie_id)
-        cached = await self._get_cached_data(key, settings.GET_BY_ID_TTL)
-        if cached is not None:
-            return MovieGetByIdResponse.model_validate(cached)
-
-        response = await self.kinopoisk_service.get_movie_by_id(movie_id=movie_id)
-        validated_response = MovieGetByIdResponse.model_validate(response)
-        dict_response = validated_response.model_dump(by_alias=True, mode='json')
-        await self._set_cache_data(key, dict_response, settings.GET_BY_ID_TTL)
-
-        return validated_response
+        return await self._fetch_from_kinopoiskapi_or_cache(
+            key=key,
+            ttl=settings.GET_BY_ID_TTL,
+            model=MovieGetByIdResponse,
+            fetcher=lambda: self.kinopoisk_service.get_movie_by_id(movie_id=movie_id)
+        )
 
     async def search_person_by_name(
         self, name: str, page: int
     ) -> PersonSearchByNameResponse:
         key = self._cache_key('search_person', name, page)
-        cached = await self._get_cached_data(key, settings.SEARCH_BY_KEYWORD_TTL)
-        if cached is not None:
-            return PersonSearchByNameResponse.model_validate(cached)
-
-        response = await self.kinopoisk_service.search_person_by_name(
-            params={'name': name, 'page': page}
+        return await self._fetch_from_kinopoiskapi_or_cache(
+            key=key,
+            ttl=settings.SEARCH_BY_KEYWORD_TTL,
+            model=PersonSearchByNameResponse,
+            fetcher=lambda: self.kinopoisk_service.search_person_by_name(
+                params={'name': name, 'page': page}
+            )
         )
-        validated_response = PersonSearchByNameResponse.model_validate(response)
-        dict_response = validated_response.model_dump(by_alias=True, mode='json')
-        await self._set_cache_data(key, dict_response, settings.SEARCH_BY_KEYWORD_TTL)
-        return validated_response
 
     async def get_person_by_id(self, person_id: int) -> PersonGetByIdResponse:
         key = self._cache_key('person', person_id)
-        cached = await self._get_cached_data(key, settings.GET_BY_ID_TTL)
-        if cached is not None:
-            return PersonGetByIdResponse.model_validate(cached)
-
-        response = await self.kinopoisk_service.get_person_by_id(person_id)
-        validated_response = PersonGetByIdResponse.model_validate(response)
-        dict_response = validated_response.model_dump(by_alias=True, mode='json')
-        await self._set_cache_data(key, dict_response, settings.GET_BY_ID_TTL)
-
-        return validated_response
+        return await self._fetch_from_kinopoiskapi_or_cache(
+            key=key,
+            ttl=settings.GET_BY_ID_TTL,
+            model=PersonGetByIdResponse,
+            fetcher=lambda: self.kinopoisk_service.get_person_by_id(person_id)
+        )
