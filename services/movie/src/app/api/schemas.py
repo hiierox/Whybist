@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field, HttpUrl
 
 
@@ -9,7 +11,7 @@ class Genre(BaseModel):
     genre: str
 
 
-class MovieSearchByKeywordSchema(BaseModel):
+class MovieSearchByKeywordModel(BaseModel):
     film_id: int = Field(alias='filmId')
     name_ru: str | None = Field(default=None, alias='nameRu')
     name_en: str | None = Field(default=None, alias='nameEn')
@@ -26,10 +28,10 @@ class MovieSearchByKeywordSchema(BaseModel):
 class MovieSearchByKeywordResponse(BaseModel):
     keyword: str
     page_count: int = Field(alias='pagesCount')
-    films: list[MovieSearchByKeywordSchema]
+    films: list[MovieSearchByKeywordModel]
 
 
-class MovieSearchByIdResponse(BaseModel):
+class MovieGetByIdResponse(BaseModel):
     id: int = Field(alias='kinopoiskId')
     name_ru: str | None = Field(default=None, alias='nameRu')
     name_en: str | None = Field(default=None, alias='nameEn')
@@ -56,3 +58,58 @@ class MovieSearchByIdResponse(BaseModel):
     serial: bool | None = None
     short_film: bool | None = Field(default=None, alias='shortFilm')
     completed: bool | None = None
+
+
+class PersonSearchByNameModel(BaseModel):
+    kinopoisk_id: int = Field(alias='kinopoiskId')
+    web_url: str = Field(alias='webUrl')
+    name_ru: str | None = Field(default=None, alias='nameRu')
+    name_en: str | None = Field(default=None, alias='nameEn')
+    sex: Literal['MALE', 'FEMALE', 'UNKNOWN'] | None = None
+    poster_url: HttpUrl | None = Field(default=None, alias='posterUrl')
+
+
+class PersonSearchByNameResponse(BaseModel):
+    total: int
+    items: list[PersonSearchByNameModel]
+
+
+class PersonSpouses(BaseModel):
+    person_id: int = Field(alias='personId')
+    name: str | None = None
+    divorced: bool
+    divorced_reason: str | None = Field(default=None, alias='divorcedReason')
+    sex: Literal['MALE', 'FEMALE']
+    children: int
+    web_url: str = Field(alias='webUrl')
+    relation: str
+
+
+class PersonFilms(BaseModel):
+    film_id: int = Field(alias='filmId')
+    name_ru: str | None = Field(default=None, alias='nameRu')
+    name_en: str | None = Field(default=None, alias='nameEn')
+    rating: str | None = None
+    general: bool
+    description: str | None = None
+    profession_key: str = Field(alias='professionKey')
+
+
+class PersonGetByIdResponse(BaseModel):
+    person_id: int = Field(alias='personId')
+    web_url: str | None = Field(default=None, alias='webUrl')
+    name_ru: str | None = Field(default=None, alias='nameRu')
+    name_en: str | None = Field(default=None, alias='nameEn')
+    sex: Literal['MALE', 'FEMALE'] | None = None
+    poster_url: str = Field(alias='posterUrl')
+    growth: str | None = None
+    birthday: str | None = None
+    death: str | None = None
+    age: int | None = None
+    birthplace: str | None = None
+    deathplace: str | None = None
+    has_awards: int | None = Field(default=None, alias='hasAwards')
+    profession: str | None = None
+    facts: list[str]
+    spouses: list[PersonSpouses]
+    films: list[PersonFilms]

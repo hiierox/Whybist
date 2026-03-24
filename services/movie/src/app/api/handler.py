@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, Path, Query
 
-from app.api.schemas import MovieSearchByIdResponse, MovieSearchByKeywordResponse
+from app.api.schemas import (
+    MovieGetByIdResponse,
+    MovieSearchByKeywordResponse,
+    PersonGetByIdResponse,
+    PersonSearchByNameResponse,
+)
 from app.dependencies import get_movie_service
 from app.logic.movie_service import MovieService
 
@@ -28,7 +33,7 @@ async def search_by_keyword(
 
 @router.get(
     '/film/{movie_id}',
-    response_model=MovieSearchByIdResponse,
+    response_model=MovieGetByIdResponse,
     responses={
         401: {'description': 'Unauthorized (invalid API key)'},
         402: {'description': 'Daily request limit exceeded'},
@@ -40,5 +45,42 @@ async def search_by_keyword(
 async def get_movie_by_id(
     movie_id: int = Path(..., ge=1, le=9999999),
     movie_service: MovieService = Depends(get_movie_service),
-) -> MovieSearchByIdResponse:
+) -> MovieGetByIdResponse:
     return await movie_service.get_movie_by_id(movie_id=movie_id)
+
+
+@router.get(
+    '/person',
+    response_model=PersonSearchByNameResponse,
+    responses={
+        401: {'description': 'Unauthorized (invalid API key)'},
+        402: {'description': 'Daily request limit exceeded'},
+        404: {'description': 'Person not found'},
+        429: {'description': 'Rate limit exceeded'},
+        503: {'description': 'Upstream unavailable'},
+    },
+)
+async def search_person_by_name(
+    name: str = Query(..., pattern=r'.*\S.*'),
+    page: int = Query(1, ge=1),
+    movie_service: MovieService = Depends(get_movie_service),
+) -> PersonSearchByNameResponse:
+    return await movie_service.search_person_by_name(name=name, page=page)
+
+
+@router.get(
+    '/person/{person_id}',
+    response_model=PersonGetByIdResponse,
+    responses={
+        401: {'description': 'Unauthorized (invalid API key)'},
+        402: {'description': 'Daily request limit exceeded'},
+        404: {'description': 'Person not found'},
+        429: {'description': 'Rate limit exceeded'},
+        503: {'description': 'Upstream unavailable'},
+    },
+)
+async def get_person_by_id(
+    person_id: int = Path(..., ge=1, le=9999999),
+    movie_service: MovieService = Depends(get_movie_service),
+) -> PersonGetByIdResponse:
+    return await movie_service.get_person_by_id(person_id=person_id)

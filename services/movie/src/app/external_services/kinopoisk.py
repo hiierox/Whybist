@@ -75,9 +75,25 @@ class KinopoiskService:
         return payload
 
     async def search_movie_by_keyword(self, params: dict[str, Any]) -> dict[str, Any]:
-        """Search films by keyword using query params."""
+        """Search films by keyword using query params.
+        Return payload(json), not full response
+        """
         return await self._get('/api/v2.1/films/search-by-keyword', params=params)
 
     async def get_movie_by_id(self, movie_id: int) -> dict[str, Any]:
-        """Fetch film details by Kinopoisk movie id."""
+        """Fetch film details by Kinopoisk movie id.
+        Return payload(json), not full response
+        """
         return await self._get(f'/api/v2.2/films/{movie_id}')
+
+    async def search_person_by_name(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Search persons by keyword using query params.
+        Return payload(json), not full response
+        """
+        return await self._get('/api/v1/persons', params=params)
+
+    async def get_person_by_id(self, person_id: int) -> dict[str, Any]:
+        """Fetch person details by Kinopoisk person id.
+        Return payload(json), not full response
+        """
+        return await self._get(f'/api/v1/staff/{person_id}')
