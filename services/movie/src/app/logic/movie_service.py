@@ -38,7 +38,7 @@ class MovieService:
                 key.append(str(part).strip().lower())
         return ':'.join(key)
 
-    async def get_movie_by_keyword(
+    async def search_movie_by_keyword(
         self, keyword: str, page: int = 1
     ) -> MovieSearchByKeywordResponse:
         """Gets a list of movies by keyword."""
@@ -63,13 +63,13 @@ class MovieService:
         """Gets a movie by id"""
 
         key = self._cache_key('movie', movie_id)
-        cached = await self._get_cached_data(key, settings.MOVIE_ID_TTL)
+        cached = await self._get_cached_data(key, settings.GET_BY_ID_TTL)
         if cached is not None:
             return MovieSearchByIdResponse.model_validate(cached)
 
         response = await self.kinopoisk_service.get_movie_by_id(movie_id=movie_id)
         validated_response = MovieSearchByIdResponse.model_validate(response)
         dict_response = validated_response.model_dump(by_alias=True, mode='json')
-        await self._set_cache_data(key, dict_response, settings.MOVIE_ID_TTL)
+        await self._set_cache_data(key, dict_response, settings.GET_BY_ID_TTL)
 
         return validated_response

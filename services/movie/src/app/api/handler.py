@@ -23,7 +23,7 @@ async def search_by_keyword(
     page: int = Query(1, ge=1),
     movie_service: MovieService = Depends(get_movie_service),
 ) -> MovieSearchByKeywordResponse:
-    return await movie_service.get_movie_by_keyword(keyword=keyword, page=page)
+    return await movie_service.search_movie_by_keyword(keyword=keyword, page=page)
 
 
 @router.get(

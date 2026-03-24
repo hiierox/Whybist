@@ -74,7 +74,7 @@ class KinopoiskService:
 
         return payload
 
-    async def get_movie_by_keyword(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def search_movie_by_keyword(self, params: dict[str, Any]) -> dict[str, Any]:
         """Search films by keyword using query params."""
         return await self._get('/api/v2.1/films/search-by-keyword', params=params)
 
