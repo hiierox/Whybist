@@ -36,3 +36,9 @@ class RedisService:
             logger.info(f'Redis SET key: {key}, SUCCESS')
         except RedisError as e:
             logger.exception(f'Redis SET Error: {e}')
+
+    async def delete(self, key: str) -> None:
+        try:
+            await self.redis_client.delete(key)
+        except RedisError:
+            logger.exception(...)

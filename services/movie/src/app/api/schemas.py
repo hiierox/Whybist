@@ -1,3 +1,4 @@
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field, HttpUrl
@@ -102,7 +103,7 @@ class PersonGetByIdResponse(BaseModel):
     name_en: str | None = Field(default=None, alias='nameEn')
     sex: Literal['MALE', 'FEMALE'] | None = None
     poster_url: str = Field(alias='posterUrl')
-    growth: str | None = None
+    growth: int | None = None
     birthday: str | None = None
     death: str | None = None
     age: int | None = None
@@ -113,3 +114,18 @@ class PersonGetByIdResponse(BaseModel):
     facts: list[str]
     spouses: list[PersonSpouses]
     films: list[PersonFilms]
+
+
+class CommonFilmsResponse(BaseModel):
+    film_ids: list[int]
+
+
+class ProfessionKey(StrEnum):
+    ACTOR = 'ACTOR'
+    DIRECTOR = 'DIRECTOR'
+    WRITER = 'WRITER'
+
+
+class Sorting(StrEnum):
+    NEWEST = 'NEWEST'
+    OLDEST = 'OLDEST'
